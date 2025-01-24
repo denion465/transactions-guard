@@ -16,9 +16,9 @@
     "start:debug": "npx nest start --debug --watch",
     "start:prod": "npx node dist/main",
     "lint": "npx eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "npx jest",
-    "test:watch": "npx jest --watch",
-    "test:cov": "npx jest --coverage",
+    "test": "npx jest --runInBand",
+    "test:watch": "npx jest --runInBand --watchAll",
+    "test:cov": "npx jest --coverage --runInBand",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
   },
   "dependencies": {
