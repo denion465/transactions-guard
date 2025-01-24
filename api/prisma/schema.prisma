@@ -12,3 +12,54 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum StatusPaymentFile {
+  PENDING
+  CONFIRMED
+}
+
+model PaymentFile {
+  id               String             @id @default(uuid()) @db.Uuid
+  fileName         String             @map("file_name")
+  status           StatusPaymentFile
+  createdAt        DateTime           @default(now()) @map("created_at")
+  confirmedAt      DateTime?          @map("confirmed_at")
+  PaymentFileData  PaymentFileData[]
+  ConfirmedPayment ConfirmedPayment[]
+
+  @@map("payment_files")
+}
+
+model PaymentFileData {
+  id            String            @id @default(uuid()) @db.Uuid
+  paymentFileId String            @map("payment_file_id") @db.Uuid
+  status        StatusPaymentFile
+  name          String
+  age           Int
+  address       String
+  document      String
+  paidAmount    Float             @map("paid_amount")
+  birthDate     DateTime          @map("birth_date")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  confirmedAt   DateTime?         @map("confirmed_at")
+
+  PaymentFile PaymentFile @relation(fields: [paymentFileId], references: [id], onDelete: Cascade)
+
+  @@map("payments_files_data")
+}
+
+model ConfirmedPayment {
+  id            String   @id @default(uuid()) @db.Uuid
+  paymentFileId String   @map("payment_file_id") @db.Uuid
+  name          String
+  age           Int
+  address       String
+  document      String
+  paidAmount    Float    @map("paid_amount")
+  birthDate     DateTime @map("birth_date")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  PaymentFile PaymentFile @relation(fields: [paymentFileId], references: [id], onDelete: Restrict)
+
+  @@map("confirmed_payments")
+}
