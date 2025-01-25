@@ -104,9 +104,7 @@ export class PaymentFilesService {
     const address = line.slice(19, 53).trim();
     const document = line.slice(53, 64).trim();
     const paidAmount = parseInt(line.slice(64, 80).trim());
-    const birthDate = moment
-      .utc(line.slice(80, 88).trim(), 'YYYYMMDD')
-      .toISOString();
+    const birthDate = moment(line.slice(80, 88).trim(), 'YYYYMMDD').toDate();
 
     if (name && age && address && document && paidAmount && birthDate) {
       return {

@@ -39,7 +39,7 @@ model PaymentFileData {
   address       String
   document      String
   paidAmount    Float             @map("paid_amount")
-  birthDate     DateTime          @map("birth_date")
+  birthDate     DateTime          @map("birth_date") @db.Date
   createdAt     DateTime          @default(now()) @map("created_at")
   confirmedAt   DateTime?         @map("confirmed_at")
 
@@ -56,7 +56,7 @@ model ConfirmedPayment {
   address       String
   document      String
   paidAmount    Float    @map("paid_amount")
-  birthDate     DateTime @map("birth_date")
+  birthDate     DateTime @map("birth_date") @db.Date
   createdAt     DateTime @default(now()) @map("created_at")
 
   PaymentFile PaymentFile @relation(fields: [paymentFileId], references: [id], onDelete: Restrict)

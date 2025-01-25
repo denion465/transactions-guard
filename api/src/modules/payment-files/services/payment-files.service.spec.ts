@@ -127,7 +127,7 @@ describe('#PaymentFilesService Test Suite', () => {
         address: '845 Fahey Summit East Dillon',
         document: '11626761422',
         paidAmount: 76382,
-        birthDate: moment.utc('2023-03-21').toISOString(),
+        birthDate: moment('2023-03-21').toDate(),
       };
       const mockItem2 = {
         name: 'Frank Cole',
@@ -135,7 +135,7 @@ describe('#PaymentFilesService Test Suite', () => {
         address: '57648 Claudine Key Lockmanbury',
         document: '32641348391',
         paidAmount: 31729,
-        birthDate: moment.utc('2023-08-30').toISOString(),
+        birthDate: moment('2023-08-30').toDate(),
       };
 
       (chardet.detectFile as jest.Mock<any>).mockResolvedValue('utf-16le');
@@ -218,7 +218,7 @@ describe('#PaymentFilesService Test Suite', () => {
         address: '845 Fahey Summit East Dillon',
         document: '11626761422',
         paidAmount: 76382,
-        birthDate: moment.utc('2023-03-21').toISOString(),
+        birthDate: moment('2023-03-21').toDate(),
       };
 
       (chardet.detectFile as jest.Mock<any>).mockResolvedValue('utf-16le');
@@ -292,7 +292,7 @@ describe('#PaymentFilesService Test Suite', () => {
         address: '845 Fahey Summit East Dillon',
         document: '11626761422',
         paidAmount: 76382,
-        birthDate: moment.utc('20230321', 'YYYYMMDD').toISOString(),
+        birthDate: moment('20230321', 'YYYYMMDD').toDate(),
       });
     });
   });

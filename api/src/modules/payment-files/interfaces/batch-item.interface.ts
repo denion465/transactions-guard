@@ -4,5 +4,5 @@ export interface IBatchItem {
   address: string;
   document: string;
   paidAmount: number;
-  birthDate: string;
+  birthDate: Date;
 }
