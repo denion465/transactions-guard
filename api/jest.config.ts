@@ -8,7 +8,10 @@ import type { Config } from 'jest';
 const config: Config = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   testRegex: '.*\\.spec\\.ts$',
-  collectCoverageFrom: [],
+  collectCoverageFrom: [
+    '**/modules/**/*service{.ts,.js}',
+    '**/modules/**/*controller{.ts,.js}',
+  ],
   testEnvironment: 'node',
   clearMocks: true,
   collectCoverage: true,
@@ -21,6 +24,10 @@ const config: Config = {
   },
   testPathIgnorePatterns: ['node_modules', 'dist', '.build'],
   cache: true,
+  moduleNameMapper: {
+    '^@/modules/(.*)$': '<rootDir>/src/modules/$1',
+    '^@/shared/(.*)$': '<rootDir>/src/shared/$1',
+  },
 };
 
 export default config;
