@@ -38,8 +38,8 @@ model PaymentFileData {
   age           Int
   address       String
   document      String
-  paidAmount    Float             @map("paid_amount")
   birthDate     DateTime          @map("birth_date") @db.Date
+  paidAmount    Decimal           @map("paid_amount") @db.Decimal(15, 2)
   createdAt     DateTime          @default(now()) @map("created_at")
   confirmedAt   DateTime?         @map("confirmed_at")
 
@@ -55,8 +55,8 @@ model ConfirmedPayment {
   age           Int
   address       String
   document      String
-  paidAmount    Float    @map("paid_amount")
   birthDate     DateTime @map("birth_date") @db.Date
+  paidAmount    Decimal  @map("paid_amount") @db.Decimal(15, 2)
   createdAt     DateTime @default(now()) @map("created_at")
 
   PaymentFile PaymentFile @relation(fields: [paymentFileId], references: [id], onDelete: Restrict)
