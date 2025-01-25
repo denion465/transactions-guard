@@ -45,7 +45,7 @@ model PaymentFileData {
 
   PaymentFile PaymentFile @relation(fields: [paymentFileId], references: [id], onDelete: Cascade)
 
-  @@map("payments_files_data")
+  @@map("payment_files_data")
 }
 
 model ConfirmedPayment {
