@@ -10,6 +10,7 @@ import { TransactionContext } from '@/shared/database/transaction.context';
 import { PaymentStatusEnum } from '@/shared/enums/payment-status-enum';
 import { IBatchItem } from '../interfaces/batch-item.interface';
 import { ICSVFields } from '../interfaces/csv-fields.interface';
+import { ConfirmedPaymentsResponseDto } from '../dtos/response/confirmed-payments-response.dto';
 
 @Injectable()
 export class ConfirmedPaymentsService {
@@ -21,7 +22,7 @@ export class ConfirmedPaymentsService {
     private readonly transactionContext: TransactionContext,
   ) {}
 
-  async corfimPayments(fileId: string) {
+  async corfimPayments(fileId: string): Promise<ConfirmedPaymentsResponseDto> {
     await this.prismaService.$transaction(
       async (prisma) => {
         this.transactionContext.set(prisma);
