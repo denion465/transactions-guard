@@ -21,11 +21,17 @@ export class PaymentFilesDataRepository {
   }
 
   async findMany(findManyDto: Prisma.PaymentFileDataFindManyArgs) {
-    return await this.prismaService.paymentFileData.findMany(findManyDto);
+    const prisma = this.transactionContext.get() ?? this.prismaService;
+    return await prisma.paymentFileData.findMany(findManyDto);
   }
 
   async update(updateDto: Prisma.PaymentFileDataUpdateArgs) {
     return await this.prismaService.paymentFileData.update(updateDto);
+  }
+
+  async updateMany(updateManyDto: Prisma.PaymentFileDataUpdateManyArgs) {
+    const prisma = this.transactionContext.get() ?? this.prismaService;
+    return await prisma.paymentFileData.updateMany(updateManyDto);
   }
 
   async delete(deleteDto: Prisma.PaymentFileDataDeleteArgs) {

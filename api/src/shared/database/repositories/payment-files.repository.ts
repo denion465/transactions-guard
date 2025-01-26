@@ -16,7 +16,16 @@ export class PaymentFilesRepository {
     return await prisma.paymentFile.create(createDto);
   }
 
+  async findUnique(findUniqueDto: Prisma.PaymentFileFindUniqueArgs) {
+    return await this.prismaService.paymentFile.findUnique(findUniqueDto);
+  }
+
   async findMany(findManyDto: Prisma.PaymentFileFindManyArgs) {
     return await this.prismaService.paymentFile.findMany(findManyDto);
+  }
+
+  async update(updateDto: Prisma.PaymentFileUpdateArgs) {
+    const prisma = this.transactionContext.get() ?? this.prismaService;
+    return await prisma.paymentFile.update(updateDto);
   }
 }

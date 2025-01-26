@@ -45,6 +45,7 @@ model PaymentFileData {
 
   PaymentFile PaymentFile @relation(fields: [paymentFileId], references: [id], onDelete: Cascade)
 
+  @@index([paymentFileId, status, id(sort: Asc)])
   @@map("payment_files_data")
 }
 
