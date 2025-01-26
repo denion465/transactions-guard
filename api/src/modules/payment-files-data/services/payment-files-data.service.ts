@@ -4,6 +4,7 @@ import * as moment from 'moment';
 import { PaymentFilesDataRepository } from '@/shared/database/repositories/payment-files-data.repository';
 import { PaymentFilesDataDto } from '../dtos/payment-files-data.dto';
 import { IGetAllFilesDataFilters } from '../interfaces/get-all-files-data-filters.interface';
+import { UpdateFileDataResponseDto } from '../dtos/response/update-file-data-response.dto';
 
 @Injectable()
 export class PaymentFilesDataService {
@@ -51,7 +52,10 @@ export class PaymentFilesDataService {
     };
   }
 
-  async update(fileDataId: string, updateFileDataDto: PaymentFilesDataDto) {
+  async update(
+    fileDataId: string,
+    updateFileDataDto: PaymentFilesDataDto,
+  ): Promise<UpdateFileDataResponseDto> {
     const fileData = await this.paymentFilesDataRepo.findUnique({
       where: {
         id: fileDataId,
