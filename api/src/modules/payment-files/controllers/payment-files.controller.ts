@@ -26,7 +26,7 @@ import { OptionalParseQueryDatePipe } from '@/shared/pipes/parse-status-payment-
 import { IFile } from '../interfaces/file.interface';
 import { FileRequiredPipe } from '../pipes/file-required.pipe';
 import { PaymentFilesService } from '../services/payment-files.service';
-import { GetAllFilesResponse } from '../dtos/response/get-all-files-response.dto';
+import { GetAllFilesResponseDto } from '../dtos/response/get-all-files-response.dto';
 import { UploadFileResponseDto } from '../dtos/response/upload-file-response.dto';
 
 @ApiTags('Upload Files')
@@ -118,7 +118,7 @@ export class PaymentFilesController {
   })
   @ApiOkResponse({
     description: 'Lista de arquivos retornada com sucesso',
-    type: GetAllFilesResponse,
+    type: GetAllFilesResponseDto,
   })
   @ApiInternalServerErrorResponse({
     description: 'An unexpected error occurred, please try again later',

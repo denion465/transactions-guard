@@ -60,7 +60,7 @@ class Results {
   createdAt: Date;
 }
 
-export class GetAllFileDataResponse {
+export class GetAllFileDataResponseDto {
   @ApiProperty({
     description: 'Dados de arquivos encontrados',
     type: Results,

@@ -14,7 +14,7 @@ import { IBatchItem } from '../interfaces/batch-item.interface';
 import { IFile } from '../interfaces/file.interface';
 import { IGetAllFilesFilters } from '../interfaces/get-all-files-filters.interface';
 import { UploadFileResponseDto } from '../dtos/response/upload-file-response.dto';
-import { GetAllFilesResponse } from '../dtos/response/get-all-files-response.dto';
+import { GetAllFilesResponseDto } from '../dtos/response/get-all-files-response.dto';
 
 @Injectable()
 export class PaymentFilesService {
@@ -79,7 +79,7 @@ export class PaymentFilesService {
 
   async getAllFiles(
     filters: IGetAllFilesFilters,
-  ): Promise<GetAllFilesResponse> {
+  ): Promise<GetAllFilesResponseDto> {
     const skip = (filters.page - 1) * filters.pageSize;
     const take = filters.pageSize;
 
@@ -110,7 +110,7 @@ export class PaymentFilesService {
       results,
       page: filters.page,
       pageSize: filters.pageSize,
-    } as GetAllFilesResponse;
+    } as GetAllFilesResponseDto;
   }
 
   private async saveBatchItems(batch: IBatchItem[]) {

@@ -28,7 +28,7 @@ import { randomUUID } from 'node:crypto';
 import { OptionalParseQueryDatePipe } from '@/shared/pipes/parse-status-payment-enum.pipe';
 import { PaymentFilesDataDto } from '../dtos/payment-files-data.dto';
 import { PaymentFilesDataService } from '../services/payment-files-data.service';
-import { GetAllFileDataResponse } from '../dtos/response/get-all-file-data-response.dto';
+import { GetAllFileDataResponseDto } from '../dtos/response/get-all-file-data-response.dto';
 import { UpdateFileDataResponseDto } from '../dtos/response/update-file-data-response.dto';
 
 @ApiTags('File Data')
@@ -79,7 +79,7 @@ export class PaymentFilesDataController {
   })
   @ApiOkResponse({
     description: 'Dados de arquivos retornada com sucesso',
-    type: GetAllFileDataResponse,
+    type: GetAllFileDataResponseDto,
   })
   @ApiInternalServerErrorResponse({
     description: 'An unexpected error occurred, please try again later',

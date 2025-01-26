@@ -29,7 +29,7 @@ class Results {
   createdAt: Date;
 }
 
-export class GetAllFilesResponse {
+export class GetAllFilesResponseDto {
   @ApiProperty({
     description: 'Lista de arquivos encontrados',
     type: Results,
