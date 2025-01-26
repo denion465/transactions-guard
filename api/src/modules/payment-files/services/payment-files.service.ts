@@ -13,6 +13,8 @@ import { isValidTextFile } from '@/shared/utils/is-valid-text-file';
 import { IBatchItem } from '../interfaces/batch-item.interface';
 import { IFile } from '../interfaces/file.interface';
 import { IGetAllFilesFilters } from '../interfaces/get-all-files-filters.interface';
+import { UploadFileResponseDto } from '../dtos/response/upload-file-response.dto';
+import { GetAllFilesResponse } from '../dtos/response/get-all-files-response.dto';
 
 @Injectable()
 export class PaymentFilesService {
@@ -26,7 +28,7 @@ export class PaymentFilesService {
     private readonly transactionContext: TransactionContext,
   ) {}
 
-  async saveFileData(file: IFile) {
+  async saveFileData(file: IFile): Promise<UploadFileResponseDto> {
     const encodeType = await chardet.detectFile(file.path);
     const fileStream = createReadStream(file.path).pipe(
       iconv.decodeStream(encodeType ?? 'utf-8'),
@@ -75,7 +77,9 @@ export class PaymentFilesService {
     };
   }
 
-  async getAllFiles(filters: IGetAllFilesFilters) {
+  async getAllFiles(
+    filters: IGetAllFilesFilters,
+  ): Promise<GetAllFilesResponse> {
     const skip = (filters.page - 1) * filters.pageSize;
     const take = filters.pageSize;
 
@@ -106,7 +110,7 @@ export class PaymentFilesService {
       results,
       page: filters.page,
       pageSize: filters.pageSize,
-    };
+    } as GetAllFilesResponse;
   }
 
   private async saveBatchItems(batch: IBatchItem[]) {
