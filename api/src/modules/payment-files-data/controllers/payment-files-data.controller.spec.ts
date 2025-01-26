@@ -3,6 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
+import * as moment from 'moment';
 
 import { PaymentFilesDataDto } from '../dtos/payment-files-data.dto';
 import { PaymentFilesDataService } from '../services/payment-files-data.service';
@@ -31,9 +32,9 @@ describe('#PaymentFilesDataController Test Suite', () => {
         {
           provide: PaymentFilesDataService,
           useValue: {
-            saveFileData: jest.fn(),
             update: jest.fn(),
             remove: jest.fn(),
+            getAllFileData: jest.fn(),
           },
         },
       ],
@@ -43,6 +44,41 @@ describe('#PaymentFilesDataController Test Suite', () => {
       PaymentFilesDataController,
     );
     service = module.get<PaymentFilesDataService>(PaymentFilesDataService);
+  });
+
+  describe('#getAllFileData', () => {
+    it('should call getAllFileData with the correct paramters', async () => {
+      const fileId = '123e4567-e89b-12d3-a456-426614174000';
+      const page = 1;
+      const pageSize = 10;
+      const startDate = String(moment('2025-01-01').valueOf());
+      const endDate = String(moment('2025-01-31').valueOf());
+
+      const getAllFileDataSpy = jest
+        .spyOn(service, 'getAllFileData')
+        .mockResolvedValue({
+          results: [],
+          page,
+          pageSize,
+        });
+
+      await controller.findAllFileData(
+        fileId,
+        page,
+        pageSize,
+        startDate,
+        endDate,
+      );
+
+      expect(getAllFileDataSpy).toHaveBeenCalledWith({
+        fileId,
+        page,
+        pageSize,
+        startDate,
+        endDate,
+      });
+      expect(getAllFileDataSpy).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('#update', () => {

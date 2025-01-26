@@ -20,6 +20,10 @@ export class PaymentFilesDataRepository {
     return await this.prismaService.paymentFileData.findUnique(findUniqueDto);
   }
 
+  async findMany(findManyDto: Prisma.PaymentFileDataFindManyArgs) {
+    return await this.prismaService.paymentFileData.findMany(findManyDto);
+  }
+
   async update(updateDto: Prisma.PaymentFileDataUpdateArgs) {
     return await this.prismaService.paymentFileData.update(updateDto);
   }

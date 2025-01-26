@@ -7,6 +7,7 @@ import { PrismaService } from '@/shared/database/prisma.service';
 import { PaymentFilesDataRepository } from '@/shared/database/repositories/payment-files-data.repository';
 import { TransactionContext } from '@/shared/database/transaction.context';
 import { PaymentFilesDataDto } from '../dtos/payment-files-data.dto';
+import { IGetAllFilesDataFilters } from '../interfaces/get-all-files-data-filters.interface';
 import { PaymentFilesDataService } from './payment-files-data.service';
 
 jest.mock('chardet');
@@ -17,10 +18,10 @@ jest.mock('@/shared/utils/is-valid-text-file');
 
 describe('#PaymentFilesDataService Test Suite', () => {
   let service: PaymentFilesDataService;
-  const mockPaymentFilesRepo = { create: jest.fn() };
   const mockPaymentFilesDataRepo = {
     createMany: jest.fn(),
     findUnique: jest.fn(),
+    findMany: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
   };
@@ -32,15 +33,18 @@ describe('#PaymentFilesDataService Test Suite', () => {
     paidAmount: 2000,
     birthDate: '1990-10-10',
   };
+  const mockFilters: IGetAllFilesDataFilters = {
+    fileId: '123e4567-e89b-12d3-a456-426614174000',
+    page: 1,
+    pageSize: 5,
+    startDate: String(moment('2025-01-01').valueOf()),
+    endDate: String(moment('2025-01-31').valueOf()),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentFilesDataService,
-        {
-          provide: PaymentFilesDataRepository,
-          useValue: mockPaymentFilesRepo,
-        },
         {
           provide: PaymentFilesDataRepository,
           useValue: mockPaymentFilesDataRepo,
@@ -61,6 +65,62 @@ describe('#PaymentFilesDataService Test Suite', () => {
     }).compile();
 
     service = module.get<PaymentFilesDataService>(PaymentFilesDataService);
+  });
+
+  describe('getAllFileData', () => {
+    it('should call findMany with correct parameters', async () => {
+      const mockFilters: IGetAllFilesDataFilters = {
+        fileId: '123e4567-e89b-12d3-a456-426614174000',
+        page: 1,
+        pageSize: 10,
+      };
+
+      await service.getAllFileData(mockFilters);
+
+      expect(mockPaymentFilesDataRepo.findMany).toHaveBeenCalledWith({
+        where: {
+          paymentFileId: mockFilters.fileId,
+          createdAt: {
+            gte: undefined,
+            lte: undefined,
+          },
+        },
+        skip: 0,
+        take: 10,
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          paidAmount: true,
+          document: true,
+          birthDate: true,
+          age: true,
+          status: true,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+    });
+
+    it('should return paginated results', async () => {
+      const mockResults = [
+        { id: '123', fileName: 'file1', status: 'PENDING' },
+        { id: '456', fileName: 'file2', status: 'PENDING' },
+      ];
+
+      (
+        jest.spyOn(mockPaymentFilesDataRepo, 'findMany') as jest.Mock<any>
+      ).mockResolvedValue(mockResults);
+
+      const result = await service.getAllFileData(mockFilters);
+
+      expect(result).toStrictEqual({
+        results: mockResults,
+        page: mockFilters.page,
+        pageSize: mockFilters.pageSize,
+      });
+    });
   });
 
   describe('#update', () => {

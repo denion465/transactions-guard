@@ -10,8 +10,9 @@ import { PaymentFilesDataRepository } from '@/shared/database/repositories/payme
 import { PaymentFilesRepository } from '@/shared/database/repositories/payment-files.repository';
 import { TransactionContext } from '@/shared/database/transaction.context';
 import { isValidTextFile } from '@/shared/utils/is-valid-text-file';
-import { IFile } from '../interfaces/file.interface';
 import { IBatchItem } from '../interfaces/batch-item.interface';
+import { IFile } from '../interfaces/file.interface';
+import { IGetAllFilesFilters } from '../interfaces/get-all-files-filters.interface';
 
 @Injectable()
 export class PaymentFilesService {
@@ -71,6 +72,40 @@ export class PaymentFilesService {
       id: this.fileId,
       message: 'File data saved successfully',
       code: 201,
+    };
+  }
+
+  async getAllFiles(filters: IGetAllFilesFilters) {
+    const skip = (filters.page - 1) * filters.pageSize;
+    const take = filters.pageSize;
+
+    const results = await this.paymentFilesRepo.findMany({
+      where: {
+        createdAt: {
+          gte: filters.startDate
+            ? moment.utc(Number(filters.startDate)).toDate()
+            : undefined,
+          lte: filters.endDate
+            ? moment.utc(Number(filters.endDate)).toDate()
+            : undefined,
+        },
+      },
+      skip,
+      take,
+      select: {
+        id: true,
+        fileName: true,
+        status: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    return {
+      results,
+      page: filters.page,
+      pageSize: filters.pageSize,
     };
   }
 

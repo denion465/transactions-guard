@@ -15,4 +15,8 @@ export class PaymentFilesRepository {
     const prisma = this.transactionContext.get() ?? this.prismaService;
     return await prisma.paymentFile.create(createDto);
   }
+
+  async findMany(findManyDto: Prisma.PaymentFileFindManyArgs) {
+    return await this.prismaService.paymentFile.findMany(findManyDto);
+  }
 }

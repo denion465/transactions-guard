@@ -12,6 +12,7 @@ import { PaymentFilesRepository } from '@/shared/database/repositories/payment-f
 import { TransactionContext } from '@/shared/database/transaction.context';
 import { isValidTextFile } from '@/shared/utils/is-valid-text-file';
 import { IFile } from '../interfaces/file.interface';
+import { IGetAllFilesFilters } from '../interfaces/get-all-files-filters.interface';
 import { PaymentFilesService } from './payment-files.service';
 
 jest.mock('chardet');
@@ -39,8 +40,14 @@ describe('#PaymentFilesService Test Suite', () => {
   let service: PaymentFilesService;
   let paymentFilesRepo: PaymentFilesRepository;
   let prismaService: PrismaService;
-  const mockPaymentFilesRepo = { create: jest.fn() };
   const mockPaymentFilesDataRepo = { createMany: jest.fn() };
+  const mockPaymentFilesRepo = { create: jest.fn(), findMany: jest.fn() };
+  const mockFilters: IGetAllFilesFilters = {
+    page: 1,
+    pageSize: 5,
+    startDate: String(moment('2025-01-01').valueOf()),
+    endDate: String(moment('2025-01-31').valueOf()),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -281,18 +288,69 @@ describe('#PaymentFilesService Test Suite', () => {
   });
 
   describe('parseItemToDB', () => {
-    it('should parse a valid line correctly', () => {
-      const line =
-        'Kathryne Lockma0051      845 Fahey Summit East Dillon11626761422000000000007638220230321';
-      const result = service['parseItemToDB'](line);
+    describe('getAllFiles', () => {
+      it('should call findMany with correct parameters', async () => {
+        const mockFilters: IGetAllFilesFilters = {
+          page: 1,
+          pageSize: 10,
+        };
 
-      expect(result).toStrictEqual({
-        name: 'Kathryne Lockma',
-        age: 51,
-        address: '845 Fahey Summit East Dillon',
-        document: '11626761422',
-        paidAmount: 76382,
-        birthDate: moment('20230321', 'YYYYMMDD').toDate(),
+        await service.getAllFiles(mockFilters);
+
+        expect(mockPaymentFilesRepo.findMany).toHaveBeenCalledWith({
+          where: {
+            createdAt: {
+              gte: undefined,
+              lte: undefined,
+            },
+          },
+          skip: 0,
+          take: 10,
+          select: {
+            id: true,
+            fileName: true,
+            status: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        });
+      });
+
+      it('should return paginated results', async () => {
+        const mockResults = [
+          { id: '123', fileName: 'file1', status: 'pending' },
+          { id: '456', fileName: 'file2', status: 'PENDING' },
+        ];
+
+        (
+          jest.spyOn(mockPaymentFilesRepo, 'findMany') as jest.Mock<any>
+        ).mockResolvedValue(mockResults);
+
+        const result = await service.getAllFiles(mockFilters);
+
+        expect(result).toStrictEqual({
+          results: mockResults,
+          page: mockFilters.page,
+          pageSize: mockFilters.pageSize,
+        });
+      });
+    });
+
+    describe('#parseItemToDB', () => {
+      it('should parse a valid line correctly', () => {
+        const line =
+          'Kathryne Lockma0051      845 Fahey Summit East Dillon11626761422000000000007638220230321';
+        const result = service['parseItemToDB'](line);
+
+        expect(result).toStrictEqual({
+          name: 'Kathryne Lockma',
+          age: 51,
+          address: '845 Fahey Summit East Dillon',
+          document: '11626761422',
+          paidAmount: 76382,
+          birthDate: moment('20230321', 'YYYYMMDD').toDate(),
+        });
       });
     });
   });

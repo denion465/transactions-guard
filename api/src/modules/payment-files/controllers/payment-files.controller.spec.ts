@@ -1,11 +1,12 @@
-import { it, describe, jest, beforeEach, expect } from '@jest/globals';
-import { Test, TestingModule } from '@nestjs/testing';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { BadRequestException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as moment from 'moment';
 
-import { PaymentFilesController } from './payment-files.controller';
-import { PaymentFilesService } from '../services/payment-files.service';
 import { IFile } from '../interfaces/file.interface';
 import { FileRequiredPipe } from '../pipes/file-required.pipe';
+import { PaymentFilesService } from '../services/payment-files.service';
+import { PaymentFilesController } from './payment-files.controller';
 
 describe('#PaymentFilesController Test Suite', () => {
   let controller: PaymentFilesController;
@@ -20,6 +21,7 @@ describe('#PaymentFilesController Test Suite', () => {
           provide: PaymentFilesService,
           useValue: {
             saveFileData: jest.fn(),
+            getAllFiles: jest.fn(),
           },
         },
       ],
@@ -68,6 +70,33 @@ describe('#PaymentFilesController Test Suite', () => {
       expect(() => pipe.transform()).toThrowError(
         new BadRequestException('File is required'),
       );
+    });
+  });
+
+  describe('#getAllFiles', () => {
+    it('should call getAllFiles with the correct paramters', async () => {
+      const page = 1;
+      const pageSize = 10;
+      const startDate = String(moment('2025-01-01').valueOf());
+      const endDate = String(moment('2025-01-31').valueOf());
+
+      const getAllFilesSpy = jest
+        .spyOn(service, 'getAllFiles')
+        .mockResolvedValue({
+          results: [],
+          page,
+          pageSize,
+        });
+
+      await controller.findAllFiles(page, pageSize, startDate, endDate);
+
+      expect(getAllFilesSpy).toHaveBeenCalledWith({
+        page,
+        pageSize,
+        startDate,
+        endDate,
+      });
+      expect(getAllFilesSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
