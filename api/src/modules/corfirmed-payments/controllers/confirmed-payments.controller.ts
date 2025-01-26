@@ -17,12 +17,12 @@ export class ConfirmedPaymentsController {
     private readonly confirmedPaymentsService: ConfirmedPaymentsService,
   ) {}
 
-  @Post('confirm-payments/:fileId')
+  @Post('confirmed-payments/:fileId')
   confirmPayments(@Param('fileId', ParseUUIDPipe) fileId: string) {
     return this.confirmedPaymentsService.corfimPayments(fileId);
   }
 
-  @Get('confirm-payments/export-csv')
+  @Get('confirmed-payments/export-csv')
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="payments.csv"')
   exportCSV(@Res() res: Response) {
