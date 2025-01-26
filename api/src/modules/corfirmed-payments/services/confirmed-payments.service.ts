@@ -1,5 +1,7 @@
 import { PrismaService } from '@/shared/database/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Readable, Transform } from 'node:stream';
+import * as moment from 'moment';
 
 import { ConfirmedPaymentsRepository } from '@/shared/database/repositories/confirmed-payments.repository';
 import { PaymentFilesDataRepository } from '@/shared/database/repositories/payment-files-data.repository';
@@ -7,6 +9,7 @@ import { PaymentFilesRepository } from '@/shared/database/repositories/payment-f
 import { TransactionContext } from '@/shared/database/transaction.context';
 import { PaymentStatusEnum } from '@/shared/enums/payment-status-enum';
 import { IBatchItem } from '../interfaces/batch-item.interface';
+import { ICSVFields } from '../interfaces/csv-fields.interface';
 
 @Injectable()
 export class ConfirmedPaymentsService {
@@ -110,5 +113,69 @@ export class ConfirmedPaymentsService {
       message: 'Payment data successfully confirmed',
       code: 200,
     };
+  }
+
+  getConfirmedPaymentsCsv() {
+    let counter = 0;
+    const batchItemsReadable = Readable.from(this.getPaymentItems());
+    const mapField = new Transform({
+      objectMode: true,
+      transform(chunk: ICSVFields, _enconding, cb) {
+        const { name, address, age, document, paidAmount, birthDate } = chunk;
+        const result = `${name},${age},${address},${document},${paidAmount},${moment(birthDate).format('YYYY-MM-DD')}\n`;
+        cb(null, result);
+      },
+    });
+    const mapHeaders = new Transform({
+      transform(chunk: string, _enconding, cb) {
+        if (counter) {
+          return cb(null, chunk);
+        }
+
+        counter++;
+        cb(
+          null,
+          'Nome,Idade,Endereço,CPF,Quantia Paga,Data de Nascimento\n'.concat(
+            chunk,
+          ),
+        );
+      },
+    });
+
+    return batchItemsReadable.pipe(mapField).pipe(mapHeaders);
+  }
+
+  private async *getPaymentItems() {
+    let cursor: string | undefined;
+    let batchItems: IBatchItem[] = [];
+    const batchlength = 5000;
+
+    do {
+      batchItems = await this.confirmedPaymentsRepo.findMany({
+        where: {
+          id: { gt: cursor },
+        },
+        select: {
+          id: true,
+          name: true,
+          age: true,
+          address: true,
+          document: true,
+          paidAmount: true,
+          birthDate: true,
+        },
+        take: batchlength,
+        orderBy: { id: 'asc' },
+      });
+
+      if (Array.isArray(batchItems) && batchItems.length > 0) {
+        const lastItem = batchItems[batchItems.length - 1];
+        cursor = lastItem.id;
+
+        for (const item of batchItems) {
+          yield item;
+        }
+      }
+    } while (Array.isArray(batchItems) && batchItems.length > 0);
   }
 }

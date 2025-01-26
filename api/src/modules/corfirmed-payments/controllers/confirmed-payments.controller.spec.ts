@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Response } from 'express';
 
 import { ConfirmedPaymentsController } from './confirmed-payments.controller';
 import { ConfirmedPaymentsService } from '../services/confirmed-payments.service';
@@ -16,6 +17,7 @@ describe('#ComfirmedPaymentsController Test Suite', () => {
           provide: ConfirmedPaymentsService,
           useValue: {
             corfimPayments: jest.fn(),
+            getConfirmedPaymentsCsv: jest.fn(),
           },
         },
       ],
@@ -35,6 +37,43 @@ describe('#ComfirmedPaymentsController Test Suite', () => {
 
       expect(corfimPaymentsSpy).toHaveBeenCalledWith('123');
       expect(corfimPaymentsSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('#exportCSV', () => {
+    it('should export CSV and set headers correctly', () => {
+      const mockCsvStream = {
+        pipe: jest.fn(),
+      };
+      const headers = {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename="payments.csv"',
+      };
+      const mockResponse = {
+        setHeader: jest.fn((key: string, value: string) => {
+          headers[key] = value;
+          return mockResponse;
+        }),
+        getHeaders: jest.fn(() => headers),
+      } as unknown as Response;
+
+      (
+        jest.spyOn(service, 'getConfirmedPaymentsCsv') as jest.Mock
+      ).mockReturnValue(mockCsvStream);
+
+      controller.exportCSV(mockResponse);
+
+      const getConfirmedPaymentsCsvSpy = jest.spyOn(
+        service,
+        'getConfirmedPaymentsCsv',
+      );
+
+      expect(getConfirmedPaymentsCsvSpy).toHaveBeenCalled();
+      expect(mockCsvStream.pipe).toHaveBeenCalledWith(mockResponse);
+      expect(mockResponse.getHeaders()).toStrictEqual({
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename="payments.csv"',
+      });
     });
   });
 });

@@ -19,25 +19,15 @@ describe('#ComfirmedPaymentsService Test Suite', () => {
         id: '123',
         fileName: 'file-name',
       }),
-      update: (jest.fn() as jest.Mock<any>).mockResolvedValue({}),
+      update: jest.fn(),
     },
     paymentFilesData: {
-      findMany: (jest.fn() as jest.Mock<any>).mockResolvedValue([
-        {
-          id: '1',
-          name: 'John Doe',
-          age: 30,
-          address: '123 Main St',
-          document: '123456789',
-          paidAmount: 100,
-          birthDate: '1990-01-01',
-          paymentFileId: '123',
-        },
-      ]),
-      updateMany: (jest.fn() as jest.Mock<any>).mockResolvedValue({}),
+      findMany: jest.fn() as jest.Mock<any>,
+      updateMany: jest.fn(),
     },
     confirmedPayments: {
-      createMany: (jest.fn() as jest.Mock<any>).mockResolvedValue({}),
+      createMany: jest.fn(),
+      findMany: jest.fn() as jest.Mock<any>,
     },
   };
   const mockTransactionContext = {
@@ -67,6 +57,7 @@ describe('#ComfirmedPaymentsService Test Suite', () => {
           provide: ConfirmedPaymentsRepository,
           useValue: {
             createMany: mockPrisma.confirmedPayments.createMany,
+            findMany: mockPrisma.confirmedPayments.findMany,
           },
         },
         {
@@ -195,6 +186,66 @@ describe('#ComfirmedPaymentsService Test Suite', () => {
       expect(mockPrisma.confirmedPayments.createMany).not.toHaveBeenCalled();
       expect(mockPrisma.paymentFilesData.updateMany).not.toHaveBeenCalled();
       expect(mockPrisma.paymentFiles.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getConfirmedPaymentsCsv', () => {
+    it('should return a CSV stream with headers and data', async () => {
+      const mockItems = [
+        {
+          id: '1',
+          name: 'John Doe',
+          age: 30,
+          address: '123 Main St',
+          document: '123456789',
+          paidAmount: 1000,
+          birthDate: '1990-01-01',
+        },
+        {
+          id: '2',
+          name: 'Jane Doe',
+          age: 25,
+          address: '456 Elm St',
+          document: '987654321',
+          paidAmount: 2000,
+          birthDate: '1995-01-01',
+        },
+      ];
+
+      mockPrisma.confirmedPayments.findMany
+        .mockResolvedValueOnce(mockItems)
+        .mockResolvedValueOnce([]);
+
+      const csvStream = service.getConfirmedPaymentsCsv();
+
+      const chunks: string[] = [];
+      for await (const chunk of csvStream) {
+        chunks.push(chunk as string);
+      }
+
+      const csvOutput = chunks.join('');
+
+      const expectedOutput =
+        'Nome,Idade,Endereço,CPF,Quantia Paga,Data de Nascimento\n' +
+        'John Doe,30,123 Main St,123456789,1000,1990-01-01\n' +
+        'Jane Doe,25,456 Elm St,987654321,2000,1995-01-01\n';
+
+      expect(csvOutput).toStrictEqual(expectedOutput);
+      expect(mockPrisma.confirmedPayments.findMany).toHaveBeenCalledWith({
+        where: { id: { gt: undefined } },
+        select: {
+          id: true,
+          name: true,
+          age: true,
+          address: true,
+          document: true,
+          paidAmount: true,
+          birthDate: true,
+        },
+        take: 5000,
+        orderBy: { id: 'asc' },
+      });
+      expect(mockPrisma.confirmedPayments.findMany).toHaveBeenCalledTimes(2);
     });
   });
 });

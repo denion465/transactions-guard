@@ -15,4 +15,8 @@ export class ConfirmedPaymentsRepository {
     const prisma = this.transactionContext.get() ?? this.prismaService;
     return await prisma.confirmedPayment.createMany(createManyDto);
   }
+
+  async findMany(findManyDto: Prisma.ConfirmedPaymentFindManyArgs) {
+    return await this.prismaService.confirmedPayment.findMany(findManyDto);
+  }
 }
