@@ -28,4 +28,8 @@ export class PaymentFilesRepository {
     const prisma = this.transactionContext.get() ?? this.prismaService;
     return await prisma.paymentFile.update(updateDto);
   }
+
+  async count(countDto: Prisma.PaymentFileCountArgs) {
+    return await this.prismaService.paymentFile.count(countDto);
+  }
 }

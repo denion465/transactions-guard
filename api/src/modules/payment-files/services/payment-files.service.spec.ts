@@ -14,6 +14,7 @@ import { isValidTextFile } from '@/shared/utils/is-valid-text-file';
 import { IFile } from '../interfaces/file.interface';
 import { IGetAllFilesFilters } from '../interfaces/get-all-files-filters.interface';
 import { PaymentFilesService } from './payment-files.service';
+import { PaymentStatusEnum } from '@/shared/enums/payment-status-enum';
 
 jest.mock('chardet');
 jest.mock('iconv-lite');
@@ -40,13 +41,24 @@ describe('#PaymentFilesService Test Suite', () => {
   let service: PaymentFilesService;
   let paymentFilesRepo: PaymentFilesRepository;
   let prismaService: PrismaService;
-  const mockPaymentFilesDataRepo = { createMany: jest.fn() };
-  const mockPaymentFilesRepo = { create: jest.fn(), findMany: jest.fn() };
+  const mockPrisma = {
+    mockPaymentFilesDataRepo: { createMany: jest.fn() },
+    mockPaymentFilesRepo: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      count: jest.fn(),
+    },
+  };
+
   const mockFilters: IGetAllFilesFilters = {
     page: 1,
     pageSize: 5,
     startDate: String(moment('2025-01-01').valueOf()),
     endDate: String(moment('2025-01-31').valueOf()),
+  };
+  const mockTransactionContext = {
+    set: jest.fn(),
+    get: jest.fn().mockReturnValue(mockPrisma),
   };
 
   beforeEach(async () => {
@@ -55,11 +67,11 @@ describe('#PaymentFilesService Test Suite', () => {
         PaymentFilesService,
         {
           provide: PaymentFilesRepository,
-          useValue: mockPaymentFilesRepo,
+          useValue: mockPrisma.mockPaymentFilesRepo,
         },
         {
           provide: PaymentFilesDataRepository,
-          useValue: mockPaymentFilesDataRepo,
+          useValue: mockPrisma.mockPaymentFilesDataRepo,
         },
         {
           provide: PrismaService,
@@ -69,9 +81,7 @@ describe('#PaymentFilesService Test Suite', () => {
         },
         {
           provide: TransactionContext,
-          useValue: {
-            set: jest.fn(),
-          },
+          useValue: mockTransactionContext,
         },
       ],
     }).compile();
@@ -89,6 +99,12 @@ describe('#PaymentFilesService Test Suite', () => {
       const mockFile = createFileMock({
         buffer: Buffer.from(invalidBufferBytes),
       });
+
+      (prismaService.$transaction as jest.Mock).mockImplementation(
+        async (callback: (prisma: PrismaService) => Promise<void>) => {
+          await callback(prismaService);
+        },
+      );
 
       (chardet.detectFile as jest.Mock<any>).mockResolvedValue(undefined);
 
@@ -186,24 +202,26 @@ describe('#PaymentFilesService Test Suite', () => {
         code: 201,
       });
 
-      expect(mockPaymentFilesRepo.create).toHaveBeenCalledWith({
+      expect(mockPrisma.mockPaymentFilesRepo.create).toHaveBeenCalledWith({
         data: {
           fileName: 'test.rem',
-          status: 'PENDING',
+          status: PaymentStatusEnum.PENDING,
         },
       });
 
-      expect(mockPaymentFilesDataRepo.createMany).toHaveBeenCalledWith({
+      expect(
+        mockPrisma.mockPaymentFilesDataRepo.createMany,
+      ).toHaveBeenCalledWith({
         data: [
           expect.objectContaining({
             ...mockItem1,
             paymentFileId: '123',
-            status: 'PENDING',
+            status: PaymentStatusEnum.PENDING,
           }),
           expect.objectContaining({
             ...mockItem2,
             paymentFileId: '123',
-            status: 'PENDING',
+            status: PaymentStatusEnum.PENDING,
           }),
         ],
       });
@@ -268,19 +286,23 @@ describe('#PaymentFilesService Test Suite', () => {
         message: 'File data saved successfully',
         code: 201,
       });
-      expect(mockPaymentFilesRepo.create).toHaveBeenCalledWith({
+      expect(mockPrisma.mockPaymentFilesRepo.create).toHaveBeenCalledWith({
         data: {
           fileName: 'test.rem',
-          status: 'PENDING',
+          status: PaymentStatusEnum.PENDING,
         },
       });
-      expect(mockPaymentFilesDataRepo.createMany).toHaveBeenCalledTimes(2);
-      expect(mockPaymentFilesDataRepo.createMany).toHaveBeenCalledWith({
+      expect(
+        mockPrisma.mockPaymentFilesDataRepo.createMany,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        mockPrisma.mockPaymentFilesDataRepo.createMany,
+      ).toHaveBeenCalledWith({
         data: expect.arrayContaining([
           expect.objectContaining({
             ...mockItem,
             paymentFileId: '123',
-            status: 'PENDING',
+            status: PaymentStatusEnum.PENDING,
           }),
         ]),
       });
@@ -297,7 +319,7 @@ describe('#PaymentFilesService Test Suite', () => {
 
         await service.getAllFiles(mockFilters);
 
-        expect(mockPaymentFilesRepo.findMany).toHaveBeenCalledWith({
+        expect(mockPrisma.mockPaymentFilesRepo.findMany).toHaveBeenCalledWith({
           where: {
             createdAt: {
               gte: undefined,
@@ -310,6 +332,7 @@ describe('#PaymentFilesService Test Suite', () => {
             id: true,
             fileName: true,
             status: true,
+            createdAt: true,
           },
           orderBy: {
             createdAt: 'asc',
@@ -319,13 +342,19 @@ describe('#PaymentFilesService Test Suite', () => {
 
       it('should return paginated results', async () => {
         const mockResults = [
-          { id: '123', fileName: 'file1', status: 'pending' },
-          { id: '456', fileName: 'file2', status: 'PENDING' },
+          { id: '123', fileName: 'file1', status: PaymentStatusEnum.PENDING },
+          { id: '456', fileName: 'file2', status: PaymentStatusEnum.PENDING },
         ];
 
         (
-          jest.spyOn(mockPaymentFilesRepo, 'findMany') as jest.Mock<any>
+          jest.spyOn(
+            mockPrisma.mockPaymentFilesRepo,
+            'findMany',
+          ) as jest.Mock<any>
         ).mockResolvedValue(mockResults);
+        (
+          jest.spyOn(mockPrisma.mockPaymentFilesRepo, 'count') as jest.Mock<any>
+        ).mockResolvedValue(2);
 
         const result = await service.getAllFiles(mockFilters);
 
@@ -333,6 +362,7 @@ describe('#PaymentFilesService Test Suite', () => {
           results: mockResults,
           page: mockFilters.page,
           pageSize: mockFilters.pageSize,
+          total: 2,
         });
       });
     });

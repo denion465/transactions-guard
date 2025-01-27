@@ -9,6 +9,7 @@ import { TransactionContext } from '@/shared/database/transaction.context';
 import { PaymentFilesDataDto } from '../dtos/payment-files-data.dto';
 import { IGetAllFilesDataFilters } from '../interfaces/get-all-files-data-filters.interface';
 import { PaymentFilesDataService } from './payment-files-data.service';
+import { PaymentStatusEnum } from '@/shared/enums/payment-status-enum';
 
 jest.mock('chardet');
 jest.mock('iconv-lite');
@@ -24,6 +25,7 @@ describe('#PaymentFilesDataService Test Suite', () => {
     findMany: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    count: jest.fn(),
   };
   const mockPaymentFileDataDto: PaymentFilesDataDto = {
     name: 'Batata Cenoura',
@@ -105,20 +107,22 @@ describe('#PaymentFilesDataService Test Suite', () => {
 
     it('should return paginated results', async () => {
       const mockResults = [
-        { id: '123', fileName: 'file1', status: 'PENDING' },
-        { id: '456', fileName: 'file2', status: 'PENDING' },
+        { id: '123', fileName: 'file1', status: PaymentStatusEnum.PENDING },
+        { id: '456', fileName: 'file2', status: PaymentStatusEnum.PENDING },
       ];
 
       (
         jest.spyOn(mockPaymentFilesDataRepo, 'findMany') as jest.Mock<any>
       ).mockResolvedValue(mockResults);
+      (mockPaymentFilesDataRepo.count as jest.Mock<any>).mockResolvedValue(2);
 
       const result = await service.getAllFileData(mockFilters);
 
       expect(result).toStrictEqual({
         results: mockResults,
-        page: mockFilters.page,
-        pageSize: mockFilters.pageSize,
+        page: 1,
+        pageSize: 5,
+        total: 2,
       });
     });
   });

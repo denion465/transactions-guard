@@ -37,4 +37,8 @@ export class PaymentFilesDataRepository {
   async delete(deleteDto: Prisma.PaymentFileDataDeleteArgs) {
     return await this.prismaService.paymentFileData.delete(deleteDto);
   }
+
+  async count(countDto: Prisma.PaymentFileDataCountArgs) {
+    return await this.prismaService.paymentFileData.count(countDto);
+  }
 }

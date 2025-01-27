@@ -60,6 +60,7 @@ describe('#PaymentFilesDataController Test Suite', () => {
           results: [],
           page,
           pageSize,
+          total: 0,
         });
 
       await controller.findAllFileData(

@@ -47,4 +47,10 @@ export class GetAllFilesResponseDto {
     example: 10,
   })
   pageSize: number;
+
+  @ApiProperty({
+    description: 'Total de arquivos encontrados',
+    example: 100,
+  })
+  total: number;
 }

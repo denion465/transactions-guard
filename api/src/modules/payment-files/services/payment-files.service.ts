@@ -42,31 +42,41 @@ export class PaymentFilesService {
     this.fileName = file.originalname;
 
     let firstLineValid = false;
-    for await (const line of rl) {
-      if (!firstLineValid) {
-        const isValid = isValidTextFile(line);
 
-        if (!isValid) {
-          throw new BadRequestException(
-            'Invalid file content, only text files are allowed',
-          );
+    await this.prismaService.$transaction(
+      async (prisma) => {
+        this.transactionContext.set(prisma);
+
+        for await (const line of rl) {
+          if (!firstLineValid) {
+            const isValid = isValidTextFile(line);
+
+            if (!isValid) {
+              throw new BadRequestException(
+                'Invalid file content, only text files are allowed',
+              );
+            }
+
+            firstLineValid = true;
+          }
+
+          const item = this.parseItemToDB(line);
+          if (item) batch.push(item);
+
+          if (batch.length === batchLength) {
+            await this.saveBatchItems(batch);
+            batch.length = 0;
+          }
         }
 
-        firstLineValid = true;
-      }
-
-      const item = this.parseItemToDB(line);
-      if (item) batch.push(item);
-
-      if (batch.length === batchLength) {
-        await this.saveBatchItems(batch);
-        batch.length = 0;
-      }
-    }
-
-    if (batch.length > 0) {
-      await this.saveBatchItems(batch);
-    }
+        if (batch.length > 0) {
+          await this.saveBatchItems(batch);
+        }
+      },
+      {
+        timeout: 10000,
+      },
+    );
 
     rl.close();
 
@@ -83,57 +93,69 @@ export class PaymentFilesService {
     const skip = (filters.page - 1) * filters.pageSize;
     const take = filters.pageSize;
 
-    const results = await this.paymentFilesRepo.findMany({
-      where: {
-        createdAt: {
-          gte: filters.startDate
-            ? moment.utc(Number(filters.startDate)).toDate()
-            : undefined,
-          lte: filters.endDate
-            ? moment.utc(Number(filters.endDate)).toDate()
-            : undefined,
+    const [results, count] = await Promise.all([
+      this.paymentFilesRepo.findMany({
+        where: {
+          createdAt: {
+            gte: filters.startDate
+              ? moment.utc(Number(filters.startDate)).toDate()
+              : undefined,
+            lte: filters.endDate
+              ? moment.utc(Number(filters.endDate)).toDate()
+              : undefined,
+          },
         },
-      },
-      skip,
-      take,
-      select: {
-        id: true,
-        fileName: true,
-        status: true,
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
+        skip,
+        take,
+        select: {
+          id: true,
+          fileName: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      }),
+      this.paymentFilesRepo.count({
+        where: {
+          createdAt: {
+            gte: filters.startDate
+              ? moment.utc(Number(filters.startDate)).toDate()
+              : undefined,
+            lte: filters.endDate
+              ? moment.utc(Number(filters.endDate)).toDate()
+              : undefined,
+          },
+        },
+      }),
+    ]);
 
     return {
       results,
       page: filters.page,
       pageSize: filters.pageSize,
+      total: count,
     } as GetAllFilesResponseDto;
   }
 
   private async saveBatchItems(batch: IBatchItem[]) {
-    return await this.prismaService.$transaction(async (prisma) => {
-      this.transactionContext.set(prisma);
-
-      if (!this.fileId) {
-        const { id } = await this.paymentFilesRepo.create({
-          data: {
-            fileName: this.fileName,
-            status: 'PENDING',
-          },
-        });
-        this.fileId = id;
-      }
-
-      await this.paymentFilesDataRepo.createMany({
-        data: batch.map((item) => ({
-          ...item,
-          paymentFileId: this.fileId,
+    if (!this.fileId) {
+      const { id } = await this.paymentFilesRepo.create({
+        data: {
+          fileName: this.fileName,
           status: 'PENDING',
-        })),
+        },
       });
+      this.fileId = id;
+    }
+
+    await this.paymentFilesDataRepo.createMany({
+      data: batch.map((item) => ({
+        ...item,
+        paymentFileId: this.fileId,
+        status: 'PENDING',
+      })),
     });
   }
 

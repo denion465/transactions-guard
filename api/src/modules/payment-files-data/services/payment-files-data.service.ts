@@ -16,39 +16,55 @@ export class PaymentFilesDataService {
     const skip = (filters.page - 1) * filters.pageSize;
     const take = filters.pageSize;
 
-    const results = await this.paymentFilesDataRepo.findMany({
-      where: {
-        paymentFileId: filters.fileId,
-        createdAt: {
-          gte: filters.startDate
-            ? moment.utc(Number(filters.startDate)).toDate()
-            : undefined,
-          lte: filters.endDate
-            ? moment.utc(Number(filters.endDate)).toDate()
-            : undefined,
+    const [results, count] = await Promise.all([
+      this.paymentFilesDataRepo.findMany({
+        where: {
+          paymentFileId: filters.fileId,
+          createdAt: {
+            gte: filters.startDate
+              ? moment.utc(Number(filters.startDate)).toDate()
+              : undefined,
+            lte: filters.endDate
+              ? moment.utc(Number(filters.endDate)).toDate()
+              : undefined,
+          },
         },
-      },
-      skip,
-      take,
-      select: {
-        id: true,
-        name: true,
-        address: true,
-        paidAmount: true,
-        document: true,
-        birthDate: true,
-        age: true,
-        status: true,
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
+        skip,
+        take,
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          paidAmount: true,
+          document: true,
+          birthDate: true,
+          age: true,
+          status: true,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      }),
+      this.paymentFilesDataRepo.count({
+        where: {
+          paymentFileId: filters.fileId,
+          createdAt: {
+            gte: filters.startDate
+              ? moment.utc(Number(filters.startDate)).toDate()
+              : undefined,
+            lte: filters.endDate
+              ? moment.utc(Number(filters.endDate)).toDate()
+              : undefined,
+          },
+        },
+      }),
+    ]);
 
     return {
       results,
       page: filters.page,
       pageSize: filters.pageSize,
+      total: count,
     };
   }
 
