@@ -23,6 +23,7 @@ export function FileDetails() {
   const [isRemoveModalVisible, setRemoveIsModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const pageSize = 50;
   const columns = [
@@ -129,6 +130,7 @@ export function FileDetails() {
 
   async function handleConfirmData() {
     try {
+      setIsLoading(true);
       await confirmPayments(id!);
       setConfirmIsModalVisible(false);
       toast.success('Dados confirmados com sucesso!');
@@ -144,11 +146,13 @@ export function FileDetails() {
 
   async function handleRemoveData() {
     try {
+      setIsLoading(true);
       await removeFileData(fileDataId!);
       toast.success('Dado removido com sucesso!');
       setRemoveIsModalVisible(false);
       await fetchAllFileData();
       setfileDataId(null);
+      setIsLoading(false);
     } catch (error) {
       toast.error('Erro ao remover dado!');
       console.error('Erro ao confirmar arquivos:', error);
@@ -204,6 +208,7 @@ export function FileDetails() {
         title="Confirmação"
         onOk={handleConfirmData}
         onCancel={handleCancel}
+        loading={isLoading}
       >
         <p>Você tem certeza que deseja confirmar os dados deste arquivo?</p>
       </Modal>
@@ -212,6 +217,7 @@ export function FileDetails() {
         title="Confirmação"
         onOk={handleRemoveData}
         onCancel={handleCancel}
+        loading={isLoading}
       >
         <p>Você tem certeza que deseja remover esse dado do arquivo?</p>
       </Modal>
