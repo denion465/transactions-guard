@@ -1,7 +1,8 @@
-function App() {
+import { Router } from './Router'
 
+function App() {
   return (
-    <div>Hello word</div>
+    <Router />
   )
 }
 
