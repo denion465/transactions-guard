@@ -14,7 +14,7 @@
     "start": "npx nest start",
     "start:dev": "npx nest start --watch",
     "start:debug": "npx nest start --debug --watch",
-    "start:prod": "npx node dist/main",
+    "start:prod": "npx node dist/src/main",
     "lint": "npx eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "npx jest --runInBand",
     "test:watch": "npx jest --runInBand --watchAll",

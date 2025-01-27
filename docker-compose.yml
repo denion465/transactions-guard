@@ -1,0 +1,39 @@
+services:
+  transactions-guard-db:
+    image: "postgres:latest"
+    container_name: pg-transactions-guard
+    volumes:
+      - transactions-guard-db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=transactions_guard
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+
+  api:
+    build: ./api
+    container_name: transactions-guard-api
+    restart: no
+    ports:
+      - 3000:3000
+    depends_on:
+      - transactions-guard-db
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@transactions-guard-db:5432/transactions_guard?schema=public
+      - DB_HOST=transactions-guard-db
+      - DB_PORT=5432
+
+  frontend:
+    build: ./frontend
+    restart: no
+    ports:
+      - 4173:4173
+    depends_on:
+      - api
+    environment:
+      - VITE_API_URL=http://api:3000/transactions-guard
+
+volumes:
+  transactions-guard-db: {}
