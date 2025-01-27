@@ -1,4 +1,5 @@
 import { Button, Layout, Space } from 'antd';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router';
 
 const { Header } = Layout;
@@ -14,7 +15,9 @@ export function AppHeader () {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        toast.success('Download iniciado com sucesso!');
       } catch (error) {
+        toast.error('Erro ao fazer download do arquivo!');
         console.error('Erro ao fazer download do arquivo:', error);
       }
     }

@@ -3,6 +3,9 @@ import { Table, Space, Button, DatePicker } from 'antd';
 import { FileUploadButton } from '../components/FileUploadButton';
 import moment from 'moment';
 import { getAllFiles, IQueryParamsGetAllFiles } from '../../app/services/filesService/getAllFiles';
+import { Link } from 'react-router-dom';
+import { capitalizeFirstLetter } from '../../app/utils/capitalizeFirstLetter';
+import toast from 'react-hot-toast';
 
 const { RangePicker } = DatePicker;
 
@@ -10,7 +13,8 @@ export function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [files, setFiles] = useState([]);
   const [dateRange, setDateRange] = useState<string[] | null>([]);
-  const pageSize = 30;
+  const [totalPages, setTotalPages] = useState(0);
+  const pageSize = 50;
   const columns = [
     {
       title: 'Nome',
@@ -21,21 +25,24 @@ export function Home() {
       title: 'Status do arquivo',
       dataIndex: 'status',
       key: 'status',
+      render: (status: string) => capitalizeFirstLetter(status.toLowerCase())
     },
     {
       title: 'Criado Em',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (dateString: string) => moment(dateString).format('DD/MM/YYYY HH:mm:ss')
+      render: (dateString: string) => moment(dateString).format('DD/MM/YYYY [ás] HH:mm:ss')
     },
     {
       title: 'Ações',
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Button type="link" onClick={() => handleViewDetails(record)}>
-            Ver Detalhes
-          </Button>
+          <Link to={`/file-detail/${record.id}`}>
+            <Button type="link">
+              Ver Detalhes
+            </Button>
+          </Link>
         </Space>
       ),
     },
@@ -43,10 +50,7 @@ export function Home() {
   const handleDateChange = (_dates: Date[], dateString: string[]) => {
     setDateRange(dateString);
   };
-  const handleViewDetails = (record) => {
-    console.log('Detalhes do arquivo:', record);
-    alert(`Detalhes do arquivo: ${record.name}`);
-  };
+
   const scrollConfig = {
     y: 'calc(80vh - 64px - 64px)',
   };
@@ -65,15 +69,16 @@ export function Home() {
 
       const response = await getAllFiles(queryParams);
       setFiles(response.results);
-      console.log(files.length);
+      setTotalPages(response.total);
     } catch (error) {
+      toast.error('Erro ao carregar arquivos!');
       console.error('Erro ao carregar arquivos:', error);
     }
   }
 
   useEffect(() => {
     fetchAllFiles();
-  }, []);
+  }, [currentPage]);
 
   return (
     <>
@@ -100,14 +105,11 @@ export function Home() {
         pagination={{
           current: currentPage,
           pageSize,
-          total: files.length,
+          total: totalPages,
           onChange: (page) => setCurrentPage(page),
         }}
         scroll={scrollConfig}
         style={{ height: '100%', margin: '25px 50px' }}
-        onRow={(record) => ({
-          onClick: () => handleViewDetails(record),
-        })}
         rowClassName="row-clickable"
       />
     </>
