@@ -24,46 +24,39 @@ export function FileDetails() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [pageSize, setPageSize] = useState(50);
 
-  const pageSize = 50;
   const columns = [
     {
       title: 'Nome do pagante',
       dataIndex: 'name',
-      key: 'name',
     },
     {
       title: 'Idade',
       dataIndex: 'age',
-      key: 'age',
     },
     {
       title: 'Endereço',
       dataIndex: 'address',
-      key: 'address',
     },
     {
       title: 'CPF',
       dataIndex: 'document',
-      key: 'document',
       render: (document: string) => mask(document, '###.###.###-##')
     },
     {
       title: 'Data de Nascimento',
       dataIndex: 'birthDate',
-      key: 'birthDate',
       render: (dateString: string) => moment(dateString).format('DD/MM/YYYY')
     },
     {
       title: 'Quantia Paga',
       dataIndex: 'paidAmount',
-      key: 'paidAmount',
       render: (amount: number) => formatCurrency(amount)
     },
     ...(isPending ? [
       {
         title: 'Ações',
-        key: 'actions',
         render: (_, record) => (
           <Space>
             <Button
@@ -82,9 +75,14 @@ export function FileDetails() {
         ),
       }
     ] : []),
-  ];
+  ].map((col, index) => ({ ...col, key: index }));
   const scrollConfig = {
     y: 'calc(80vh - 64px - 64px)',
+  };
+
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1);
   };
 
   async function fetchAllFileData() {
@@ -177,7 +175,7 @@ export function FileDetails() {
 
   useEffect(() => {
     fetchAllFileData();
-  }, [currentPage]);
+  }, [currentPage, pageSize]);
 
   return (
     <>
@@ -236,6 +234,7 @@ export function FileDetails() {
           current: currentPage,
           pageSize,
           total: totalPages,
+          onShowSizeChange: (_, newPageSize) => handlePageSizeChange(newPageSize),
           onChange: (page) => setCurrentPage(page),
         }}
         scroll={scrollConfig}

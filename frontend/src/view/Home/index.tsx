@@ -14,28 +14,25 @@ export function Home() {
   const [files, setFiles] = useState([]);
   const [dateRange, setDateRange] = useState<string[] | null>([]);
   const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 50;
+  const [pageSize, setPageSize] = useState(50);
+
   const columns = [
     {
       title: 'Nome',
       dataIndex: 'fileName',
-      key: 'fileName',
     },
     {
       title: 'Status do arquivo',
       dataIndex: 'status',
-      key: 'status',
       render: (status: string) => capitalizeFirstLetter(status.toLowerCase())
     },
     {
       title: 'Criado Em',
       dataIndex: 'createdAt',
-      key: 'createdAt',
       render: (dateString: string) => moment(dateString).format('DD/MM/YYYY [ás] HH:mm:ss')
     },
     {
       title: 'Ações',
-      key: 'actions',
       render: (_, record) => (
         <Space>
           <Link to={`/file-detail/${record.id}`}>
@@ -46,9 +43,13 @@ export function Home() {
         </Space>
       ),
     },
-  ];
+  ].map((col, index) => ({ ...col, key: index }));
   const handleDateChange = (_dates: Date[], dateString: string[]) => {
     setDateRange(dateString);
+  };
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1);
   };
 
   const scrollConfig = {
@@ -78,7 +79,7 @@ export function Home() {
 
   useEffect(() => {
     fetchAllFiles();
-  }, [currentPage]);
+  }, [currentPage, pageSize]);
 
   return (
     <>
@@ -106,6 +107,7 @@ export function Home() {
           current: currentPage,
           pageSize,
           total: totalPages,
+          onShowSizeChange: (_, newPageSize) => handlePageSizeChange(newPageSize),
           onChange: (page) => setCurrentPage(page),
         }}
         scroll={scrollConfig}
