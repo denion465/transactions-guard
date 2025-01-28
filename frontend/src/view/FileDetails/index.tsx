@@ -168,6 +168,8 @@ export function FileDetails() {
       setIsEditModalVisible(false);
       setfileDataId(null);
     } catch (error) {
+      setIsEditModalVisible(false);
+      setfileDataId(null);
       toast.error('Erro ao editar dado!');
       console.error('Erro ao editar dado:', error);
     }

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal, Form, Input, InputNumber, Button } from 'antd';
-import { formatCurrency } from '../../app/utils/formatCurrency';
+import { NumericFormat } from 'react-number-format';
 
 const EditModal = ({ visible, onCancel, onSave, initialValues }) => {
   const [form] = Form.useForm();
+  const [paidAmount, setPaidAmount] = useState<number | undefined>(0);
 
   React.useEffect(() => {
     if (visible) {
@@ -11,16 +12,17 @@ const EditModal = ({ visible, onCancel, onSave, initialValues }) => {
     }
   }, [visible, initialValues, form]);
 
-  const handleSave = () => {
-    form
-      .validateFields()
-      .then((values) => {
-        onSave(values);
-        form.resetFields();
-      })
-      .catch((error) => {
-        console.log('Erro ao validar campos:', error);
-      });
+  const handleSave = async () => {
+    try {
+      if (typeof paidAmount !== 'undefined' && paidAmount > 0) {
+        form.setFieldsValue({ paidAmount });
+      }
+      const values = await form.validateFields();
+      onSave(values);
+      form.resetFields();
+    } catch (error) {
+      console.log('Erro ao validar campos:', error);
+    }
   };
 
   return (
@@ -99,7 +101,6 @@ const EditModal = ({ visible, onCancel, onSave, initialValues }) => {
             onChange={(e) => {
               const value = e.target.value;
 
-
               let formattedValue = value
                 .replace(/\D/g, '')
                 .replace(/^(\d{2})(\d)/g, '$1/$2')
@@ -111,11 +112,36 @@ const EditModal = ({ visible, onCancel, onSave, initialValues }) => {
           />
         </Form.Item>
 
-        <Form.Item name="paidAmount" label="Quantia Paga">
-          <InputNumber
-            formatter={(value) => formatCurrency(Number(value))}
-            min={0}
+        <Form.Item
+          name="paidAmount"
+          label="Quantia Paga"
+          rules={[
+            {
+              required: true,
+              message: 'Por favor, insira a quantia paga!',
+            },
+            {
+              validator: () => {
+                if (typeof paidAmount !== 'undefined' && paidAmount <= 0) {
+                  return Promise.reject(new Error('A quantia paga deve ser maior que 0!'));
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
+        >
+          <NumericFormat
+            customInput={Input}
+            thousandSeparator="."
+            decimalSeparator=","
+            prefix="R$ "
+            decimalScale={2}
+            fixedDecimalScale
             style={{ width: '100%' }}
+            value={paidAmount}
+            onValueChange={(values) => {
+              setPaidAmount(values.floatValue);
+            }}
           />
         </Form.Item>
       </Form>
