@@ -23,6 +23,7 @@ export function FileUploadButton({ onUploadSuccess }) {
       toast.success('Sucesso ao fazer upload do arquivo!');
       onUploadSuccess();
     } catch (error) {
+      toast.error('Erro ao fazer upload do arquivo!');
       console.error('Erro ao fazer upload do arquivo:', error);
     }
   }
