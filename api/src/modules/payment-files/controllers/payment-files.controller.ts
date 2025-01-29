@@ -28,6 +28,7 @@ import { FileRequiredPipe } from '../pipes/file-required.pipe';
 import { PaymentFilesService } from '../services/payment-files.service';
 import { GetAllFilesResponseDto } from '../dtos/response/get-all-files-response.dto';
 import { UploadFileResponseDto } from '../dtos/response/upload-file-response.dto';
+import { uploadConfig } from '@/shared/config/upload.config';
 
 @ApiTags('Upload Files')
 @Controller('transactions-guard/files')
@@ -39,7 +40,7 @@ export class PaymentFilesController {
     summary: 'Upload de arquivo de pagamento',
     description: `
       Endpoint destinado ao envio de arquivos de pagamento.
-      O arquivo deve conter dados em formato textual, independentemente da sua extensão.
+      O arquivo deve conter dados em formato textual, com extensao .txt ou .rem.
   `,
   })
   @ApiConsumes('multipart/form-data')
@@ -78,7 +79,7 @@ export class PaymentFilesController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file', { dest: '/tmp' }))
+  @UseInterceptors(FileInterceptor('file', uploadConfig))
   @UsePipes(FileRequiredPipe)
   uploadFile(@UploadedFile() file: IFile) {
     return this.paymentFilesService.saveFileData(file);

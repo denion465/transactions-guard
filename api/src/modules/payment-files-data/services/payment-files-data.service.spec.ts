@@ -15,7 +15,6 @@ jest.mock('chardet');
 jest.mock('iconv-lite');
 jest.mock('node:fs');
 jest.mock('node:readline/promises');
-jest.mock('@/shared/utils/is-valid-text-file');
 
 describe('#PaymentFilesDataService Test Suite', () => {
   let service: PaymentFilesDataService;

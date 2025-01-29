@@ -1,15 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import chardet from 'chardet';
 import * as iconv from 'iconv-lite';
 import * as moment from 'moment';
 import { createReadStream } from 'node:fs';
+import { unlink } from 'node:fs/promises';
 import { createInterface } from 'node:readline/promises';
 
+import { destinationFilePath } from '@/shared/config/upload.config';
 import { PrismaService } from '@/shared/database/prisma.service';
 import { PaymentFilesDataRepository } from '@/shared/database/repositories/payment-files-data.repository';
 import { PaymentFilesRepository } from '@/shared/database/repositories/payment-files.repository';
 import { TransactionContext } from '@/shared/database/transaction.context';
-import { isValidTextFile } from '@/shared/utils/is-valid-text-file';
 import { IBatchItem } from '../interfaces/batch-item.interface';
 import { IFile } from '../interfaces/file.interface';
 import { IGetAllFilesFilters } from '../interfaces/get-all-files-filters.interface';
@@ -41,25 +42,11 @@ export class PaymentFilesService {
     const batchLength = 10000;
     this.fileName = file.originalname;
 
-    let firstLineValid = false;
-
     await this.prismaService.$transaction(
       async (prisma) => {
         this.transactionContext.set(prisma);
 
         for await (const line of rl) {
-          if (!firstLineValid) {
-            const isValid = isValidTextFile(line);
-
-            if (!isValid) {
-              throw new BadRequestException(
-                'Invalid file content, only text files are allowed',
-              );
-            }
-
-            firstLineValid = true;
-          }
-
           const item = this.parseItemToDB(line);
           if (item) batch.push(item);
 
@@ -77,6 +64,8 @@ export class PaymentFilesService {
         timeout: 30000,
       },
     );
+
+    await unlink(`${destinationFilePath}/${file.filename}`);
 
     rl.close();
 
